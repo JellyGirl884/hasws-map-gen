@@ -10,13 +10,15 @@ class MapGenerator {
             searchArea: null,
             excluded: []
         };
+        this.myCountryData = null;
         
         this.init();
     }
 
-    init() {
+    async init() {
         this.setupEventListeners();
         this.initMap();
+        await this.setMyCountryData();
         this.updateQuestionDetails();
     }
 
@@ -39,7 +41,7 @@ class MapGenerator {
         this.updateMyLocationMarker();
     }
 
-    setMyLocation() {
+    async setMyLocation() {
         const lat = parseFloat(document.getElementById('myLat').value);
         const lng = parseFloat(document.getElementById('myLng').value);
 
@@ -49,8 +51,16 @@ class MapGenerator {
         }
 
         this.myLocation = { lat, lng };
+        await this.setMyCountryData();
         this.updateMyLocationMarker();
         this.map.setView([lat, lng], 4);
+    }
+
+    async setMyCountryData() {
+        const countryInfo = await geoData.getCountryFromCoordinates(this.myLocation.lat, this.myLocation.lng);
+        if (countryInfo.countryCode) {
+            this.myCountryData = await geoData.getCountryData(countryInfo.countryCode);
+        }
     }
 
     updateMyLocationMarker() {
@@ -114,16 +124,15 @@ class MapGenerator {
                         <option value="different">Different</option>
                     </select>
                 </div>
+                <div id="matchingInfo" class="info-text"></div>
             `,
             measuring: `
                 <div class="input-group">
                     <label>Metric to Compare</label>
                     <select id="measuringMetric">
                         <option value="population">Population</option>
-                        <option value="gdp">GDP Per Capita</option>
                         <option value="area">Total Area</option>
-                        <option value="density">Population Density</option>
-                        <option value="hdi">Human Development Index</option>
+                        <option value="gdp">GDP Per Capita</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -133,19 +142,25 @@ class MapGenerator {
                         <option value="lesser">Lesser</option>
                     </select>
                 </div>
+                <div id="measuringInfo" class="info-text"></div>
             `,
             thermometer: `
                 <div class="input-group">
-                    <label>Distance Traveled</label>
+                    <label>Direction Traveled</label>
+                    <select id="thermometerDirection">
+                        <option value="north">North</option>
+                        <option value="south">South</option>
+                        <option value="east">East</option>
+                        <option value="west">West</option>
+                    </select>
+                </div>
+                <div class="input-group">
+                    <label>Distance (miles)</label>
                     <select id="thermometerDistance">
-                        <option value="1">1 mile</option>
-                        <option value="5">5 miles</option>
-                        <option value="10">10 miles</option>
-                        <option value="25">25 miles</option>
-                        <option value="50">50 miles</option>
                         <option value="100">100 miles</option>
                         <option value="200">200 miles</option>
                         <option value="500">500 miles</option>
+                        <option value="1000">1000 miles</option>
                     </select>
                 </div>
                 <div class="input-group">
@@ -155,6 +170,7 @@ class MapGenerator {
                         <option value="colder">Colder</option>
                     </select>
                 </div>
+                <div id="thermometerInfo" class="info-text"></div>
             `,
             tentacles: `
                 <div class="input-group">
@@ -165,12 +181,13 @@ class MapGenerator {
                         <option value="hospital">Hospital</option>
                         <option value="museum">Museum</option>
                         <option value="theater">Movie Theater</option>
-                        <option value="aquarium">Aquarium</option>\n                        <option value="park">Theme Park</option>
+                        <option value="aquarium">Aquarium</option>
+                        <option value="park">Theme Park</option>
                         <option value="zoo">Zoo</option>
                     </select>
                 </div>
                 <div class="input-group">
-                    <label>Distance Range</label>
+                    <label>Distance Range (miles)</label>
                     <select id="tentaclesDistance">
                         <option value="5">5 miles</option>
                         <option value="10">10 miles</option>
@@ -180,8 +197,9 @@ class MapGenerator {
                 </div>
                 <div class="input-group">
                     <label>Which Place Was Closest?</label>
-                    <input type="text" id="tentaclesAnswer" placeholder="e.g., Hotel">
+                    <input type="text" id="tentaclesAnswer" placeholder="e.g., Hotel Downtown">
                 </div>
+                <div id="tentaclesInfo" class="info-text"></div>
             `
         };
 
@@ -190,17 +208,22 @@ class MapGenerator {
         }
     }
 
-    addQuestion() {
+    async addQuestion() {
         const type = document.getElementById('questionType').value;
+        document.getElementById('addQuestionBtn').disabled = true;
+        document.getElementById('addQuestionBtn').textContent = 'Processing...';
 
         const question = {
             type,
-            details: this.getQuestionDetails(type),
+            details: await this.getQuestionDetails(type),
             timestamp: new Date().toLocaleTimeString()
         };
 
+        document.getElementById('addQuestionBtn').disabled = false;
+        document.getElementById('addQuestionBtn').textContent = 'Add Question';
+
         if (!question.details) {
-            alert('Please fill in all fields');
+            alert('Could not process question. Please try again.');
             return;
         }
 
@@ -211,45 +234,105 @@ class MapGenerator {
         this.clearQuestionForm();
     }
 
-    getQuestionDetails(type) {
-        let distance, answer, attribute, mAnswer, metric, meAnswer, tDistance, tAnswer, place, tentDistance, tentAnswer;
-        
-        switch (type) {
-            case 'radar':
-                distance = document.getElementById('radarDistance')?.value;
-                answer = document.getElementById('radarAnswer')?.value;
-                if (!distance || !answer) return null;
-                return { distance, answer };
-                
-            case 'matching':
-                attribute = document.getElementById('matchingAttribute')?.value;
-                mAnswer = document.getElementById('matchingAnswer')?.value;
-                return { attribute, answer: mAnswer };
-                
-            case 'measuring':
-                metric = document.getElementById('measuringMetric')?.value;
-                meAnswer = document.getElementById('measuringAnswer')?.value;
-                return { metric, answer: meAnswer };
-                
-            case 'thermometer':
-                tDistance = document.getElementById('thermometerDistance')?.value;
-                tAnswer = document.getElementById('thermometerAnswer')?.value;
-                return { distance: tDistance, answer: tAnswer };
-                
-            case 'tentacles':
-                place = document.getElementById('tentaclesPlace')?.value;
-                tentDistance = document.getElementById('tentaclesDistance')?.value;
-                tentAnswer = document.getElementById('tentaclesAnswer')?.value;
-                if (!tentAnswer) return null;
-                return { place, distance: tentDistance, answer: tentAnswer };
-                
+    async getQuestionDetails(type) {
+        try {
+            switch (type) {
+                case 'radar':
+                    const distance = document.getElementById('radarDistance')?.value;
+                    const answer = document.getElementById('radarAnswer')?.value;
+                    return distance && answer ? { distance, answer } : null;
+                    
+                case 'matching':
+                    const attribute = document.getElementById('matchingAttribute')?.value;
+                    const mAnswer = document.getElementById('matchingAnswer')?.value;
+                    const attributeValue = await this.getAttributeValue(attribute);
+                    return attribute && mAnswer ? { attribute, answer: mAnswer, value: attributeValue } : null;
+                    
+                case 'measuring':
+                    const metric = document.getElementById('measuringMetric')?.value;
+                    const meAnswer = document.getElementById('measuringAnswer')?.value;
+                    const metricValue = this.getMetricValue(metric);
+                    return metric && meAnswer ? { metric, answer: meAnswer, value: metricValue } : null;
+                    
+                case 'thermometer':
+                    const direction = document.getElementById('thermometerDirection')?.value;
+                    const thermoDist = document.getElementById('thermometerDistance')?.value;
+                    const thermoAnswer = document.getElementById('thermometerAnswer')?.value;
+                    const targetCoords = this.calculateDirectionalCoordinates(this.myLocation, direction, thermoDist);
+                    const targetTemp = await geoData.getTemperature(targetCoords.lat, targetCoords.lng);
+                    return direction && thermoDist && thermoAnswer ? { direction, distance: thermoDist, answer: thermoAnswer, targetTemp, targetCoords } : null;
+                    
+                case 'tentacles':
+                    const place = document.getElementById('tentaclesPlace')?.value;
+                    const tentDist = document.getElementById('tentaclesDistance')?.value;
+                    const tentAnswer = document.getElementById('tentaclesAnswer')?.value;
+                    const places = await geoData.getNearbyPlaces(this.myLocation.lat, this.myLocation.lng, place, tentDist);
+                    return place && tentDist && tentAnswer ? { place, distance: tentDist, answer: tentAnswer, places } : null;
+                    
+                default:
+                    return null;
+            }
+        } catch (error) {
+            console.error('Error getting question details:', error);
+            return null;
+        }
+    }
+
+    async getAttributeValue(attribute) {
+        if (!this.myCountryData) return null;
+        switch (attribute) {
+            case 'continent':
+                return await geoData.getCountryFromCoordinates(this.myLocation.lat, this.myLocation.lng).then(d => d.continent);
+            case 'country':
+                return this.myCountryData.name;
+            case 'timezone':
+                return this.myCountryData.timezone;
+            case 'language':
+                return this.myCountryData.languages[0] || 'Unknown';
+            case 'religion':
+                return this.myCountryData.religion;
             default:
                 return null;
         }
     }
 
+    getMetricValue(metric) {
+        if (!this.myCountryData) return null;
+        switch (metric) {
+            case 'population':
+                return this.myCountryData.population;
+            case 'area':
+                return this.myCountryData.area;
+            case 'gdp':
+                return this.myCountryData.gdp;
+            default:
+                return null;
+        }
+    }
+
+    calculateDirectionalCoordinates(from, direction, miles) {
+        const lat = from.lat * Math.PI / 180;
+        const lng = from.lng * Math.PI / 180;
+        const distance = miles * 1.60934 / 6371; // Convert to radians (6371km = earth radius)
+        
+        let bearing = 0;
+        switch (direction) {
+            case 'north': bearing = 0; break;
+            case 'south': bearing = Math.PI; break;
+            case 'east': bearing = Math.PI / 2; break;
+            case 'west': bearing = 3 * Math.PI / 2; break;
+        }
+
+        const newLat = Math.asin(Math.sin(lat) * Math.cos(distance) + Math.cos(lat) * Math.sin(distance) * Math.cos(bearing));
+        const newLng = lng + Math.atan2(Math.sin(bearing) * Math.sin(distance) * Math.cos(lat), Math.cos(distance) - Math.sin(lat) * Math.sin(newLat));
+
+        return {
+            lat: newLat * 180 / Math.PI,
+            lng: newLng * 180 / Math.PI
+        };
+    }
+
     updateMap() {
-        // Clear previous layers
         this.layers.excluded.forEach(layer => {
             if (this.map.hasLayer(layer)) {
                 this.map.removeLayer(layer);
@@ -257,16 +340,17 @@ class MapGenerator {
         });
         this.layers.excluded = [];
 
-        // Draw search zones based on questions
         this.questions.forEach((q, idx) => {
             if (q.type === 'radar') {
                 this.drawRadarZone(q, idx);
+            } else if (q.type === 'tentacles' && q.details.places) {
+                this.drawTentaclesZone(q, idx);
             }
         });
     }
 
     drawRadarZone(question, index) {
-        const radiusKm = parseFloat(question.details.distance) * 1.60934; // Convert miles to km
+        const radiusKm = parseFloat(question.details.distance) * 1.60934;
         const isWithin = question.details.answer === 'within';
         
         const circle = L.circle([this.myLocation.lat, this.myLocation.lng], {
@@ -282,13 +366,27 @@ class MapGenerator {
         this.layers.excluded.push(circle);
     }
 
+    drawTentaclesZone(question, index) {
+        question.details.places.forEach((place, pIdx) => {
+            const color = pIdx === 0 ? '#f59e0b' : '#94a3b8';
+            const marker = L.circleMarker([place.lat, place.lng], {
+                radius: pIdx === 0 ? 7 : 5,
+                fillColor: color,
+                color: '#333',
+                weight: 2,
+                opacity: 1,
+                fillOpacity: 0.7
+            }).bindPopup(`${place.name} (${place.distance.toFixed(1)} mi)`).addTo(this.map);
+            this.layers.excluded.push(marker);
+        });
+    }
+
     calculateSearchArea() {
         if (this.questions.length === 0) {
             return Infinity;
         }
 
         let minRadius = Infinity;
-
         this.questions.forEach(q => {
             if (q.type === 'radar' && q.details.answer === 'within') {
                 const radius = parseFloat(q.details.distance);
@@ -319,7 +417,7 @@ class MapGenerator {
                     details = `${q.details.metric}: ${q.details.answer}`;
                     break;
                 case 'thermometer':
-                    details = `${q.details.distance}mi: ${q.details.answer}`;
+                    details = `${q.details.distance}mi ${q.details.direction}: ${q.details.answer}`;
                     break;
                 case 'tentacles':
                     details = `Closest ${q.details.place}: ${q.details.answer}`;
@@ -344,7 +442,7 @@ class MapGenerator {
     }
 
     clearQuestionForm() {
-        // Reset all possible form fields
+        const type = document.getElementById('questionType').value;
         const allInputs = document.querySelectorAll('#questionDetails select, #questionDetails input');
         allInputs.forEach(input => {
             if (input.tagName === 'SELECT') {
@@ -396,5 +494,4 @@ class MapGenerator {
     }
 }
 
-// Initialize app
 const app = new MapGenerator();
