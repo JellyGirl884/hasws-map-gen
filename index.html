@@ -1,0 +1,90 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Hide and Seek Map Generator</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>🗺️ Hide and Seek Map Generator</h1>
+            <p>Track down the hider by narrowing down the search area</p>
+        </header>
+
+        <div class="main-content">
+            <div class="sidebar">
+                <section class="setup-section">
+                    <h2>Your Location</h2>
+                    <div class="input-group">
+                        <label>Latitude</label>
+                        <input type="number" id="myLat" placeholder="e.g., 40.7128" step="0.0001" value="40.7128">
+                    </div>
+                    <div class="input-group">
+                        <label>Longitude</label>
+                        <input type="number" id="myLng" placeholder="e.g., -74.0060" step="0.0001" value="-74.0060">
+                    </div>
+                    <button id="setLocationBtn" class="btn btn-primary">Set My Location</button>
+                </section>
+
+                <section class="questions-section">
+                    <h2>Questions</h2>
+                    
+                    <div class="question-form">
+                        <div class="input-group">
+                            <label>Question Type</label>
+                            <select id="questionType">
+                                <option value="matching">Matching - Same attribute?</option>
+                                <option value="measuring">Measuring - Greater/Lesser metric?</option>
+                                <option value="thermometer">Thermometer - Hotter/Colder?</option>
+                                <option value="radar">Radar - Within distance?</option>
+                                <option value="tentacles">Tentacles - Closest place?</option>
+                            </select>
+                        </div>
+
+                        <div id="questionDetails"></div>
+
+                        <div class="input-group">
+                            <label>Hider's Location (Latitude)</label>
+                            <input type="number" id="hiderLat" placeholder="Latitude" step="0.0001">
+                        </div>
+                        <div class="input-group">
+                            <label>Hider's Location (Longitude)</label>
+                            <input type="number" id="hiderLng" placeholder="Longitude" step="0.0001">
+                        </div>
+
+                        <button id="addQuestionBtn" class="btn btn-success">Add Question</button>
+                    </div>
+                </section>
+
+                <section class="questions-history">
+                    <h2>Question History</h2>
+                    <div id="questionsList" class="questions-list"></div>
+                </section>
+
+                <section class="actions">
+                    <button id="clearAllBtn" class="btn btn-danger">Clear All</button>
+                    <button id="exportBtn" class="btn btn-secondary">Export Data</button>
+                </section>
+            </div>
+
+            <div class="map-container">
+                <div id="map"></div>
+                <div id="stats" class="stats">
+                    <p><strong>Search Area:</strong> <span id="searchArea">-</span></p>
+                    <p><strong>Remaining Radius:</strong> <span id="searchRadius">-</span></p>
+                    <p><strong>Questions Asked:</strong> <span id="questionCount">0</span></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
+    <script src="app.js"></script>
+    <script src="mapHandler.js"></script>
+    <script src="questionHandler.js"></script>
+</body>
+</html>
