@@ -165,8 +165,7 @@ class MapGenerator {
                         <option value="hospital">Hospital</option>
                         <option value="museum">Museum</option>
                         <option value="theater">Movie Theater</option>
-                        <option value="aquarium">Aquarium</option>
-                        <option value="park">Theme Park</option>
+                        <option value="aquarium">Aquarium</option>\n                        <option value="park">Theme Park</option>
                         <option value="zoo">Zoo</option>
                     </select>
                 </div>
@@ -213,44 +212,40 @@ class MapGenerator {
     }
 
     getQuestionDetails(type) {
-        const details = {};
+        let distance, answer, attribute, mAnswer, metric, meAnswer, tDistance, tAnswer, place, tentDistance, tentAnswer;
+        
         switch (type) {
             case 'radar':
-                const distance = document.getElementById('radarDistance').value;
-                const answer = document.getElementById('radarAnswer').value;
+                distance = document.getElementById('radarDistance')?.value;
+                answer = document.getElementById('radarAnswer')?.value;
                 if (!distance || !answer) return null;
-                details.distance = distance;
-                details.answer = answer;
-                break;
+                return { distance, answer };
+                
             case 'matching':
-                const attribute = document.getElementById('matchingAttribute').value;
-                const mAnswer = document.getElementById('matchingAnswer').value;
-                details.attribute = attribute;
-                details.answer = mAnswer;
-                break;
+                attribute = document.getElementById('matchingAttribute')?.value;
+                mAnswer = document.getElementById('matchingAnswer')?.value;
+                return { attribute, answer: mAnswer };
+                
             case 'measuring':
-                const metric = document.getElementById('measuringMetric').value;
-                const meAnswer = document.getElementById('measuringAnswer').value;
-                details.metric = metric;
-                details.answer = meAnswer;
-                break;
+                metric = document.getElementById('measuringMetric')?.value;
+                meAnswer = document.getElementById('measuringAnswer')?.value;
+                return { metric, answer: meAnswer };
+                
             case 'thermometer':
-                const tDistance = document.getElementById('thermometerDistance').value;
-                const tAnswer = document.getElementById('thermometerAnswer').value;
-                details.distance = tDistance;
-                details.answer = tAnswer;
-                break;
+                tDistance = document.getElementById('thermometerDistance')?.value;
+                tAnswer = document.getElementById('thermometerAnswer')?.value;
+                return { distance: tDistance, answer: tAnswer };
+                
             case 'tentacles':
-                const place = document.getElementById('tentaclesPlace').value;
-                const tentDistance = document.getElementById('tentaclesDistance').value;
-                const tentAnswer = document.getElementById('tentaclesAnswer').value;
+                place = document.getElementById('tentaclesPlace')?.value;
+                tentDistance = document.getElementById('tentaclesDistance')?.value;
+                tentAnswer = document.getElementById('tentaclesAnswer')?.value;
                 if (!tentAnswer) return null;
-                details.place = place;
-                details.distance = tentDistance;
-                details.answer = tentAnswer;
-                break;
+                return { place, distance: tentDistance, answer: tentAnswer };
+                
+            default:
+                return null;
         }
-        return details;
     }
 
     updateMap() {
@@ -349,10 +344,15 @@ class MapGenerator {
     }
 
     clearQuestionForm() {
-        const type = document.getElementById('questionType').value;
-        if (type === 'tentacles') {
-            document.getElementById('tentaclesAnswer').value = '';
-        }
+        // Reset all possible form fields
+        const allInputs = document.querySelectorAll('#questionDetails select, #questionDetails input');
+        allInputs.forEach(input => {
+            if (input.tagName === 'SELECT') {
+                input.selectedIndex = 0;
+            } else {
+                input.value = '';
+            }
+        });
     }
 
     updateStats() {
