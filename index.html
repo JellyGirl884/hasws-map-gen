@@ -11,7 +11,7 @@
     <div class="container">
         <header>
             <h1>🗺️ Hide and Seek Map Generator</h1>
-            <p>Track down the hider by narrowing down the search area</p>
+            <p>Answer questions to narrow down where the hider is hiding</p>
         </header>
 
         <div class="main-content">
@@ -30,37 +30,27 @@
                 </section>
 
                 <section class="questions-section">
-                    <h2>Questions</h2>
+                    <h2>Add Question</h2>
                     
                     <div class="question-form">
                         <div class="input-group">
                             <label>Question Type</label>
                             <select id="questionType">
+                                <option value="radar">Radar - Within distance?</option>
                                 <option value="matching">Matching - Same attribute?</option>
                                 <option value="measuring">Measuring - Greater/Lesser metric?</option>
                                 <option value="thermometer">Thermometer - Hotter/Colder?</option>
-                                <option value="radar">Radar - Within distance?</option>
                                 <option value="tentacles">Tentacles - Closest place?</option>
                             </select>
                         </div>
 
                         <div id="questionDetails"></div>
-
-                        <div class="input-group">
-                            <label>Hider's Location (Latitude)</label>
-                            <input type="number" id="hiderLat" placeholder="Latitude" step="0.0001">
-                        </div>
-                        <div class="input-group">
-                            <label>Hider's Location (Longitude)</label>
-                            <input type="number" id="hiderLng" placeholder="Longitude" step="0.0001">
-                        </div>
-
                         <button id="addQuestionBtn" class="btn btn-success">Add Question</button>
                     </div>
                 </section>
 
                 <section class="questions-history">
-                    <h2>Question History</h2>
+                    <h2>Questions Asked</h2>
                     <div id="questionsList" class="questions-list"></div>
                 </section>
 
@@ -73,8 +63,8 @@
             <div class="map-container">
                 <div id="map"></div>
                 <div id="stats" class="stats">
-                    <p><strong>Search Area:</strong> <span id="searchArea">-</span></p>
-                    <p><strong>Remaining Radius:</strong> <span id="searchRadius">-</span></p>
+                    <p><strong>Search Area:</strong> <span id="searchArea">World</span></p>
+                    <p><strong>Remaining Radius:</strong> <span id="searchRadius">Unlimited</span></p>
                     <p><strong>Questions Asked:</strong> <span id="questionCount">0</span></p>
                 </div>
             </div>
@@ -84,7 +74,5 @@
     <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
     <script src="https://unpkg.com/@turf/turf@6/turf.min.js"></script>
     <script src="app.js"></script>
-    <script src="mapHandler.js"></script>
-    <script src="questionHandler.js"></script>
 </body>
 </html>
